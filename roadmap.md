@@ -8,16 +8,21 @@
 Currently, the version is below 1.0. This is a hard initial development stage, and it's extremely fresh, so most key funcitonality is missing.
 When version 1.0 is completed, a proper release will be created.
 
+### Version 0.3
+A future update for this project. This is the graph file update - the graphs will load and save with more definition.
+- [ ] Node positions will be saved to a file, and read upon loading a graph
+- [ ] More TBD
+
 ### Version 0.2
 The next update of this project, and funcitonality required for me to consider this "version 0.2". This is the menu update, where the focus is to implement menus for different tasks.
-- [ ] Create a menu header and .cpp
-    - [ ] A menu that offers text input
-    - [ ] A menu that offers a choice between two buttons (there may be no need for more than this)
-- [ ] Menu for opening a graph, or creating a new graph
-- [ ] Menu for naming a new graph
-- [ ] Menu for naming a graph to open
 - [ ] Menu for renaming a Node, or deleting a Node
-- [ ] Menu for naming a new Node
+- [x] Create a menu header and .cpp
+    - [x] A menu that offers text input
+    - [x] A menu that offers a choice between two buttons (there may be no need for more than this)
+- [x] Menu for creating a new graph
+- [x] Menu for naming a new graph
+- [x] Menu for opening a graph ~~naming a graph to open~~
+- [x] Menu for naming a new Node
 
 ### Version 0.1
 A base upload of the functionality. Since I was able to complete the basic requirements, I've uploaded my code to a public repository for version control and project safety (should my PC fail, I don't want to lose this...).
