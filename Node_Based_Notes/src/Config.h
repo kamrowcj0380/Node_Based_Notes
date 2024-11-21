@@ -18,6 +18,8 @@
 #include "string"
 #include <fstream>
 #include <iostream>
+#include <chrono>
+#include <thread>
 
 //A made up version I attributed to this code.
 const std::string VERSION = "0.1";
@@ -80,4 +82,38 @@ const int NODE_SIZE_INCREASE = 8;
 
 //The base width of a node (when not hovered/selected)
 const int NODE_WIDTH = 25; //Note: node width and height are same, they are squares.
+
+//The path that all graphs will be stored in this program
+const std::string GRAPH_PATH = "Graphs/";
+
+/*** PopupMenu and Children ***/
+//The basic color of menus
+const SDL_Color MENU_BACKGROUND_COLOR = NODE_SELECTED_COLOR;
+
+//The left and right padding for buttons in ButtonMenu
+const int MENU_CONTENT_PADDING = 20;
+
+//The maximum message height
+const int MENU_MESSAGE_HEIGHT = 200;
+
+//The size of the message in any menu
+const int MENU_MESSAGE_FONT_SIZE = 28;
+
+//The inverse of the ratio of menu width to the screen size. If denom=3, then menus will be 1/3 the screen width.
+const int MENU_WIDTH_DENOM = 2;
+
+//The font size of buttons in ButtonMenu
+const int MENU_BUTTON_FONT_SIZE = 24;
+
+//The height of buttons in ButtonMenu
+const int MENU_BUTTON_HEIGHT = MENU_BUTTON_FONT_SIZE + 10;
+
+//The vertical space between buttons in ButtonMenu
+const int MENU_BUTTON_SPACING = 10;
+
+//The vertical space between buttons in TextMenu
+const int MENU_TEXT_INPUT_FONT_SIZE = 20;
+
+//The vertical space between buttons in TextMenu
+const int MENU_TEXT_INPUT_HEIGHT = MENU_TEXT_INPUT_FONT_SIZE + 10;
 

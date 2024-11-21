@@ -11,9 +11,12 @@ namespace fs = std::filesystem;
 SDL_Renderer* GraphManager::renderer = nullptr;
 TTF_Font* GraphManager::font = nullptr;
 
+ButtonMenu* button_menu = nullptr;
+TextMenu* text_menu = nullptr;
+
 /**
  * Constructor for Graphmanager. Loads SDL, TTF, requirements like window and renderer, and sets the application's
- *	window size. Also creates the "Graphs/" directory if it doesn't already exist.
+ *	window size. Also creates the Graph directory if it doesn't already exist.
  */
 GraphManager::GraphManager() {
 	//Initialize SDL
@@ -57,9 +60,9 @@ GraphManager::GraphManager() {
 	//Initialize the text editor scaled to the window's size, and pass it the font pointer
 	text_editor = new TextEditor(window_shape->w, window_shape->h, font);
 
-	//Create "Graphs/" in local directory if it doesn't exist
-	if (!fs::exists("Graphs/")) {
-		fs::create_directory("Graphs");
+	//Create path to graphs in local directory if it doesn't exist
+	if (!fs::exists(GRAPH_PATH)) {
+		fs::create_directory(GRAPH_PATH);
 	}
 
 }//END OF GraphManager()
@@ -95,26 +98,63 @@ GraphManager::~GraphManager() {
 void GraphManager::openGraph() {
 	struct stat info;
 
-	//Get the path from the user
-	std::cout << "Enter the path: ";
-	std::cin >> graph_file_path;
-	std::cout << std::endl;
+	int choice = runButtonMenu("Welcome to Node Based Graphs. What would you like to do?",
+		{ "Load an existing graph", "Create a new graph", "Delete a graph" });
 
-	//Append "Graphs/" to the front, as that's the default directory
-	graph_file_path = "Graphs/" + graph_file_path;
+	std::string message = "";
+	//Load an existing graph
+	if (choice == 0) {
+		//prompt a button menu to select a graph from the directory
+		int result = promptGraphSelection("What graph would you like to open?");
 
-	//Using the stat object 'info', determine if the path exists. Do this until the input describes a valid path.
-	while (stat(graph_file_path.c_str(), &info) != 0 && !(info.st_mode & S_IFDIR)) {
-		std::cout << "Path was invalid. Try again: ";
-		std::cin >> graph_file_path;
-		std::cout << std::endl;
-		graph_file_path = "Graphs/" + graph_file_path;
+		if (result > 0) {
+			openGraph();
+		}
+	}
+	//Create a new graph
+	else if (choice == 1) {
+		while (true) {
+			std::string* new_graph_file_path = runTextMenu("Name the new graph.");
+
+			if (new_graph_file_path == nullptr) {
+				active = false;
+				break;
+			}
+
+			graph_file_path = *new_graph_file_path;
+			fixGraphFilePath();
+
+			if (!fs::exists(graph_file_path)) {
+				fs::create_directory(graph_file_path);
+				break;
+			}
+			else if (runButtonMenu("The graph already exists. Load the graph?", { "Load the graph", "Use a new name" }) == 0) {
+				break;
+			}
+		}
+	}
+	//Delete an existing graph
+	else if (choice == 2) {
+		//prompt a button menu to select a graph from the directory
+		if (promptGraphSelection("Which graph would you like to DELETE?") == 0 && 
+			runButtonMenu("Are you sure you would like to delete " + graph_file_path + "?", { "Yes", "No" }) == 0) {
+			fs::path to_delete = graph_file_path;
+			bool result = fs::remove_all(to_delete);
+			if (!result) {
+				std::cout << "Something went wrong deleting the directory. Path: " + graph_file_path;
+				exit(0);
+			}
+		}
+
+		//return to the start - only opening a graph leaves this function
+		openGraph();
 	}
 
-	//If there wasn't a slash at the end, add it. This is necessary for later use.
-	if (graph_file_path.back() != '/') {
-		graph_file_path += "/";
+	if (!active) {
+		return;
 	}
+
+	//Load the graph
 
 	//This is a bit sloppy, but directory iterator is new to me.
 	//For each entry in the directory 'graph_file_path', open the file
@@ -126,15 +166,23 @@ void GraphManager::openGraph() {
 		}
 
 		//Create a string for the name including only the name of the .txt file
-		std::string name = entry.path().string().substr( graph_file_path.size() );
+		std::string name = entry.path().string().substr( graph_file_path.size()+1 );
+		
+		//Remove the '.txt' from the name
+		name = name.substr(0, name.size()-4);
 
 		//Create a string to store the file path
 		std::string outfile_path = entry.path().string();
 
 		//Add a node to the manager's vector to represent the file
-		addNode(name, outfile_path, 100 + 50*i, 100);
+		addNodeToVector(name, outfile_path, 100 + 50*i, 100);
 
 		i++;
+	}
+
+	//Make sure it's a file path
+	if (graph_file_path.back() != '/') {
+		graph_file_path += "/";
 	}
 
 } //END OF openGraph()
@@ -182,11 +230,24 @@ void GraphManager::handleGraphEvent(SDL_Event* event) {
 
 		//Switch to a task based on the key that was pressed
 		switch (event->key.keysym.sym) {
-		case (SDLK_ESCAPE):
-			//Exit the program. In the future, this will instead open a main menu - AAAAATODO
+		case (SDLK_ESCAPE): {
+			//Exit the program. In the future, this will instead open a main menu
 			std::cout << "Escape" << std::endl;
-			active = false;
+			int choice = runButtonMenu("Graph Editor Paused.",
+				{"Unpause", "Return to Menu", "Save and Exit"});
+			if (choice == 0) {
+				//Do nothing, just let this pass.
+			}
+			else if (choice == 1) {
+				//AAAAATODO: This doesn't work outright. Delete the previous graph first.
+				clearGraph();
+				openGraph();
+			}
+			else if (choice == 2) {
+				active = false;
+			}
 			break;
+		}
 		case (SDLK_F5):
 			//Fullscreen the program. This is a temporary feature that will probably be removed.
 			std::cout << "f5" << std::endl;
@@ -244,23 +305,9 @@ void GraphManager::handleGraphEvent(SDL_Event* event) {
 			//Make a new node
 			std::cout << "Double click, no collision? Make a new node!" << std::endl;
 
-			//Name the node using the coordinates of the mouse
-			std::string name = "node_at_" + std::to_string(mousex) + "_and_" + std::to_string(mousey);
+			//Create a new node for this graph centered on the mouse position
+			createNode(mousex, mousey);
 
-			//Piece together the path of the file the Node will represent
-			std::string outfile_path = graph_file_path + name + ".txt";
-			
-			//Open an out file stream at the outfile_path
-			std::ofstream outfile(outfile_path);
-
-			//Paste "EMPTY" into the file. This is mainly for testing, but may be preserved. AAAAATODO
-			outfile << "EMPTY" << std::endl;
-
-			//Close the output file
-			outfile.close();
-
-			//Add the node to the vector of nodes stored by GraphManager
-			addNode(name, outfile_path, mousex, mousey, true); //true means create a new node (instead of loading from file)
 		}//It was a single click hovering over empty space
 		else {
 			//Nothing was under the mouse
@@ -353,7 +400,7 @@ void GraphManager::render() {
  * Creates a Node object, and adds it to the vector of nodes active in this graph. All details for the Node are
  * passed in as parameters.
  */
-void GraphManager::addNode(std::string title, std::string file_name, int x_pos, int y_pos, bool creating_new_node) {
+void GraphManager::addNodeToVector(std::string title, std::string file_name, int x_pos, int y_pos, bool creating_new_node) {
 	//Create a temporary node defined by parameters
 	Node* temp = new Node(title, file_name, x_pos, y_pos);
 
@@ -362,7 +409,6 @@ void GraphManager::addNode(std::string title, std::string file_name, int x_pos, 
 
 	//If this Node was created during runtime
 	if (creating_new_node) {
-
 		//Open the node, displaying the text editor
 		openTargetNode(temp);
 
@@ -371,6 +417,24 @@ void GraphManager::addNode(std::string title, std::string file_name, int x_pos, 
 	}
 
 }//END OF addNode()
+
+void GraphManager::createNode(int x_pos, int y_pos) {
+	text_menu = new TextMenu(window_shape->w, window_shape->h, window_shape->w / MENU_WIDTH_DENOM, "Name the new node:");
+	std::string response = *text_menu->waitEvent(renderer);
+	std::string file_path = graph_file_path + response + ".txt";
+
+	//Open an out file stream at the file_path
+	std::ofstream outfile(file_path);
+
+	//outfile << "EMPTY" << std::endl;
+
+	//Close the output file
+	outfile.close();
+
+
+	addNodeToVector(response, file_path, x_pos, y_pos, true);
+
+}
 
 
 /**
@@ -420,5 +484,77 @@ void GraphManager::openTargetNode(Node* new_target) {
 
 	//Open the text editor, loading the file stored in the Node object
 	text_editor->open(target);
+
+}
+
+std::string* GraphManager::runTextMenu(std::string message) {
+	if (!active) {
+		return nullptr;
+	}
+
+	//render the background again //AAAAATODO: Is this necessary? Probably not
+	render();
+
+	text_menu = new TextMenu(window_shape->w, window_shape->h, window_shape->w / MENU_WIDTH_DENOM, message.c_str());
+	std::string* response = text_menu->waitEvent(renderer);
+
+	if (response == nullptr) {
+		//quit the program
+		active = false;
+	}
+
+	return response;
+}
+
+//AAAAATODO: comment on this
+int GraphManager::runButtonMenu(std::string message, std::vector<std::string> buttons) {
+	if (!active) {
+		return -1;
+	}
+	//render the background
+	render();
+
+	//create a new button menu
+	button_menu = new ButtonMenu(window_shape->w, window_shape->h, window_shape->w / MENU_WIDTH_DENOM, message.c_str(), buttons);
+
+	int result = button_menu->waitEvent(renderer);
+
+	if (result == -1) {
+		active = false;
+	}
+
+	return result;
+}
+
+void GraphManager::fixGraphFilePath() {
+	graph_file_path = GRAPH_PATH + graph_file_path;
+}
+
+void GraphManager::clearGraph() {
+	nodes.clear();
+}
+
+int GraphManager::promptGraphSelection(std::string message) {
+	std::vector<std::string> graph_directories;
+
+	for (const auto& entry : fs::directory_iterator(GRAPH_PATH)) {
+		//convert the path to a string
+		std::string path = entry.path().u8string();
+		//and add to the vector of paths
+		graph_directories.push_back(path);
+	}
+
+	//AAAAATODO: make a scroll wheel for the button menu if it is taller than the screen!
+	//If there are existing graphs
+	if (graph_directories.size() > 0) {
+		int dir_index = runButtonMenu(message, graph_directories);
+		graph_file_path = graph_directories.at(dir_index);
+		return 0;
+	}
+	else {
+		runButtonMenu("Sorry! There aren't any graphs available.", { "Okay" });
+		//restart the function
+		return 1;
+	}
 
 }

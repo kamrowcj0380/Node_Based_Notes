@@ -72,12 +72,6 @@ private:
 	//The x,y and shape of the text editor
 	SDL_Rect* shape;
 
-	//The texture of the header, which is the text display of the target node's title
-	SDL_Texture* title_texture;
-
-	//The texture of the content, which is the file_data
-	SDL_Texture* content_texture;
-
 	//A pointer to the TTF_Font used by the text editor
 	TTF_Font* font;
 

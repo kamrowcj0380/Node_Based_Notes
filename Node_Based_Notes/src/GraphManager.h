@@ -19,6 +19,8 @@
 #include "Node.h"
 #include "TextureManager.h"
 #include "TextEditor.h"
+#include "ButtonMenu.h"
+#include "TextMenu.h"
 
 
 class GraphManager {
@@ -85,8 +87,11 @@ public:
 	 * \param y_pos: The y position this node will be created at
 	 * \creating_new_node: True if a node is being created during runtime
 	 */
-	void addNode(std::string title = "new node", std::string file_name = "NONE", int x_pos=0, int y_pos=0, bool creating_new_node = false);
-
+	void addNodeToVector(std::string title = "new node", std::string file_name = "NONE", int x_pos=0, int y_pos=0, bool creating_new_node = false);
+	
+	//AAAAATODO: Comment on this
+	void createNode(int x_pos=0, int y_pos=0);
+	
 	/**
 	 * Add a new Node to the vector of nodes stored by GraphManager.
 	 *
@@ -96,6 +101,12 @@ public:
 	 */
 	Node* detectNodeUnderMouse(int mousex, int mousey);
 
+	//AAAAATODO: Comment on these
+	std::string* runTextMenu(std::string message);
+	int runButtonMenu(std::string message, std::vector<std::string> buttons);
+	void fixGraphFilePath();
+	void clearGraph();
+	int promptGraphSelection(std::string message);
 
 	//TBD - unimplemented features
 	//void deleteNode();

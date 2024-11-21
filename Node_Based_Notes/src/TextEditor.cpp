@@ -23,10 +23,7 @@ TextEditor::TextEditor(int window_width, int window_height, TTF_Font* input_font
 /**
  * The TextEditor deconstructor. This simply destroys the textures stored by the editor.
  */
-TextEditor::~TextEditor() {
-	SDL_DestroyTexture(title_texture);
-	SDL_DestroyTexture(content_texture);
-}
+TextEditor::~TextEditor() {}
 
 /**
  * Load a new Node into the text editor. This reads the file data at the file path stored by Node* target, and
@@ -109,10 +106,11 @@ void TextEditor::render(SDL_Renderer* renderer, Node* target) {
 	DrawRectWithBorder(renderer, 0, 0, shape->w, HEADER_HEIGHT, BORDER_WIDTH, &HEADER_BACKGROUND_COLOR, &BLACK);
 
 	//Render the header text
-	TextureManager::loadText(renderer, font, title_texture, target->getTitle().c_str(), &BLACK, LEFT_TEXT_BUFFER, 0, HEADER_FONT_SIZE);
+	//AAAAATODO: Handle text overflow 
+	TextureManager::loadText(renderer, font, target->getTitle().c_str(), &BLACK, LEFT_TEXT_BUFFER, 0, HEADER_FONT_SIZE);
 
 	//Render file_data
-	TextureManager::loadWrappedText(renderer, font, content_texture, file_data.c_str(), &BLACK, LEFT_TEXT_BUFFER, HEADER_HEIGHT, shape->w, 20);
+	TextureManager::loadWrappedText(renderer, font, file_data.c_str(), &BLACK, LEFT_TEXT_BUFFER, HEADER_HEIGHT, shape->w, 20);
 
 }//END OF render()
 
