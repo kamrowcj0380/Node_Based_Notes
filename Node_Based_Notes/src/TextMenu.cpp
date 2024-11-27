@@ -2,7 +2,6 @@
 
 TextMenu::TextMenu(int screen_w, int screen_h, int menu_w, const char* menu_message) {
 	//The total height the message will take up, including the padding above and below
-	//AAAAATODO: Make these integers part of the private variables, or even their own constants in Config.h
 	int message_total_height = MENU_MESSAGE_HEIGHT + MENU_CONTENT_PADDING * 2;
 	int menu_total_height = message_total_height + MENU_TEXT_INPUT_HEIGHT + MENU_CONTENT_PADDING;
 
@@ -56,15 +55,15 @@ std::string* TextMenu::waitEvent(SDL_Renderer* renderer) {
 		if (event.type == SDL_QUIT) {
 			return nullptr;
 		}
-		else if (event.type == SDL_KEYDOWN) {
-			if (event.key.keysym.sym == SDLK_BACKSPACE && text_input.length() > 1) {
+		else if (event.type == SDL_KEYDOWN && text_input.length() > 1) {
+			if (event.key.keysym.sym == SDLK_BACKSPACE) {
+				//Delete a character
 				text_input.pop_back();
 				text_input.pop_back();
 				text_input += "|";
 			}
 			else if (event.key.keysym.sym == SDLK_RETURN) {
-				//Done entering text!
-
+				//Finish with the text menu and return
 				SDL_RenderClear(renderer);
 
 				text_input.pop_back();

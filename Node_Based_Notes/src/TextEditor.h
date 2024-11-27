@@ -59,7 +59,7 @@ public:
 	 * \param event: The SDL_Event* that describes the keys pressed
 	 */
 	void handleKeyPress(SDL_Event* event);
-	
+
 	/**
 	 * \return The SDL_Rect* that describes the x, y, width, and height of this text editor
 	 */

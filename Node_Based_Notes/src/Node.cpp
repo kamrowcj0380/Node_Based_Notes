@@ -56,3 +56,31 @@ void Node::setPos(int x, int y) {
 	shape->y = y-shape->h/2;
 }
 
+/**
+ * A complicated setter function.
+ * Change the title of the node, as well as the file path associated with the node.
+ */
+void Node::setTitle(std::string new_title) {
+
+	//get the index of the title in 'fname' string
+	int start = fname.find(title);
+	int end = start + title.length();
+
+	//change the file path to reflect the new title
+	std::string old_path = fname;
+	fname.replace(start, end, new_title);
+
+	fname += ".txt";
+
+	std::cout << "Old: " << old_path << std::endl;
+	std::cout << "New: " << fname << std::endl;
+
+	//change the file
+	if (std::rename(old_path.c_str(), fname.c_str()) != 0) {
+		std::cout << "Issue: Node's file was not renamed." << std::endl;
+	}
+
+	//change the title
+	title = new_title;
+
+}

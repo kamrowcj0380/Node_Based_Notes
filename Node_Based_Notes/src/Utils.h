@@ -102,3 +102,19 @@ inline void DrawRectWithBorder(SDL_Renderer* renderer, int x, int y, int w, int 
 inline void DrawRectWithBorder(SDL_Renderer* renderer, SDL_Rect* rect, int border_width, const SDL_Color* rect_color, const SDL_Color* border_color) {
 	DrawRectWithBorder(renderer, rect->x, rect->y, rect->w, rect->h, border_width, rect_color, border_color);
 }
+
+/**
+ * Given an x,y coordinate, determine if it is within the bounding box x, y and width, height given.
+ *
+ * \param x: the x position of the coordinate
+ * \param y: the y position of the coordinate
+ * \param box_x: the leftmost coordinate of the bounding box
+ * \param box_y: the top coordinate of the bounding box
+ * \param box_w: the width of the box
+ * \param box_h: the height of the box
+ * \return True if the coordinates are within the box
+ */
+inline bool isWithin(int x, int y, int box_x, int box_y, int box_w, int box_h) {
+	return (x > box_x && y > box_y && x < box_x + box_w && y < box_y + box_h);
+
+}

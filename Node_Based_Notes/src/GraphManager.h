@@ -89,7 +89,13 @@ public:
 	 */
 	void addNodeToVector(std::string title = "new node", std::string file_name = "NONE", int x_pos=0, int y_pos=0, bool creating_new_node = false);
 	
-	//AAAAATODO: Comment on this
+	/**
+	 * Prompt the user to create a new node. This is used when generating a file, so the user will
+	 *	be prompted to enter the name of the new node via textbox.
+	 *
+	 * \param x_pos: The x position for the created node
+	 * \param y_pos: The y position for the created node
+	 */
 	void createNode(int x_pos=0, int y_pos=0);
 	
 	/**
@@ -101,12 +107,18 @@ public:
 	 */
 	Node* detectNodeUnderMouse(int mousex, int mousey);
 
+	/**
+	 * Ask the user if they would like to delete the target Node, and if yes then delete it.
+	 */
+	void promptDeleteNode();
+
 	//AAAAATODO: Comment on these
 	std::string* runTextMenu(std::string message);
 	int runButtonMenu(std::string message, std::vector<std::string> buttons);
 	void fixGraphFilePath();
 	void clearGraph();
 	int promptGraphSelection(std::string message);
+	std::string ensureUniqueNodeName(std::string node_name, std::string message);
 
 	//TBD - unimplemented features
 	//void deleteNode();
@@ -165,9 +177,10 @@ private:
 	//The current node being hovered over. If nullptr, there is not a node under the mouse
 	Node* hover_target = nullptr;
 
+	//A pointer to the text editor object used to display and edit Node contents
+	TextEditor* text_editor = nullptr;
+
 	//The vector of all Nodes displayed on this graph
 	std::vector<Node*> nodes;
 
-	//A pointer to the text editor object used to display and edit Node contents
-	TextEditor* text_editor;
 };

@@ -11,9 +11,6 @@ namespace fs = std::filesystem;
 SDL_Renderer* GraphManager::renderer = nullptr;
 TTF_Font* GraphManager::font = nullptr;
 
-ButtonMenu* button_menu = nullptr;
-TextMenu* text_menu = nullptr;
-
 /**
  * Constructor for Graphmanager. Loads SDL, TTF, requirements like window and renderer, and sets the application's
  *	window size. Also creates the Graph directory if it doesn't already exist.
@@ -92,8 +89,6 @@ GraphManager::~GraphManager() {
  * directory. That will be added AFTER a menu system has been created, as it will rely on the ouptut from that
  * menu to function. I could implement it now, but I'm one person, and this is my chosen priority.
  * 
- * NOTE: This is really sloppy, and one of the top items on the TODO list is to recreate it. It serves as a 
- *	basic process only so other functionality can be developed and tested.
  */
 void GraphManager::openGraph() {
 	struct stat info;
@@ -187,15 +182,7 @@ void GraphManager::openGraph() {
 
 } //END OF openGraph()
 
-/**
- * Open a graph. Currently rudimentary, this just takes command line input and verifies that the directory exists.
- * Then, it creates a node for each text file in that directory. It doesn't yet have the option to create a new
- * directory. That will be added AFTER a menu system has been created, as it will rely on the ouptut from that
- * menu to function. I could implement it now, but I'm one person, and this is my chosen priority.
- *
- * NOTE: This is really sloppy, and one of the top items on the TODO list is to recreate it. It serves as a
- *	basic process only so other functionality can be developed and tested.
- */
+//TODO: Comment on this
 void GraphManager::handleEvents() {
 	SDL_Event event;
 	//Wait for an event to happen before proceeding. Mouse movement, keyboard input, closing the program are all events
@@ -235,11 +222,7 @@ void GraphManager::handleGraphEvent(SDL_Event* event) {
 			std::cout << "Escape" << std::endl;
 			int choice = runButtonMenu("Graph Editor Paused.",
 				{"Unpause", "Return to Menu", "Save and Exit"});
-			if (choice == 0) {
-				//Do nothing, just let this pass.
-			}
-			else if (choice == 1) {
-				//AAAAATODO: This doesn't work outright. Delete the previous graph first.
+			if (choice == 1) {
 				clearGraph();
 				openGraph();
 			}
@@ -251,7 +234,12 @@ void GraphManager::handleGraphEvent(SDL_Event* event) {
 		case (SDLK_F5):
 			//Fullscreen the program. This is a temporary feature that will probably be removed.
 			std::cout << "f5" << std::endl;
-			SDL_SetWindowFullscreen(window, fullscreen);
+			if (fullscreen) {
+				SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+			}
+			else {
+				SDL_SetWindowFullscreen(window, 0);
+			}
 			fullscreen = !fullscreen;
 			break;
 		default:
@@ -269,8 +257,9 @@ void GraphManager::handleGraphEvent(SDL_Event* event) {
 	Node* current_target = detectNodeUnderMouse(mousex, mousey);
 
 	//Update graphics of hovered and selected nodes
+
 	//If current target is not null, then you are hovering over a node
-	if (current_target != nullptr) { // && mouse_flags != 1    ---> AAAAATODO: DOESN'T WORK?
+	if (current_target != nullptr) {
 		hover_target = current_target;
 		hover_target->updateHoverStatus(true);
 	}//if current target is null, then there is nothing to hover over
@@ -345,6 +334,10 @@ bool GraphManager::handleTextEditorEvent(SDL_Event* event) {
 		if (event->key.keysym.sym == SDLK_ESCAPE) {
 			deselectTargetNode();
 		}
+		//If the key was delete, ask to delete this Node
+		else if (event->key.keysym.sym == SDLK_DELETE) {
+			promptDeleteNode();
+		}
 		else {
 			//handle the key press
 			text_editor->handleKeyPress(event);
@@ -353,11 +346,22 @@ bool GraphManager::handleTextEditorEvent(SDL_Event* event) {
 		//There was an event
 		return true;
 	}//Else if the mouse was inside of the text editor, consider it a text editor event and return true
-	else if (mousey > 0 && mousey < text_editor->getShape()->h && mousex > 0 && mousex < text_editor->getShape()->w) {
+	else if (isWithin(mousex, mousey, 0, 0, text_editor->getShape()->w, text_editor->getShape()->h)) {
 
-		//If the mouse was clicked, say so. That's all this does for now
-		if (event->type == SDL_MOUSEBUTTONDOWN) {
-			std::cout << "Clicked on text editor area" << std::endl;
+		//If a mouse button was pressed, and the mouse was within the coordinates for the header
+		if (event->type == SDL_MOUSEBUTTONDOWN && isWithin(mousex, mousey, 0, 0, text_editor->getShape()->w, HEADER_HEIGHT)) {
+			//ask to rename, delete, or cancel
+			int result = runButtonMenu("What would you like to do to the node?", { "rename", "delete", "cancel" });
+
+			//rename the node
+			if (result == 0) {
+				std::string new_title = ensureUniqueNodeName(*runTextMenu("Rename the Node."), "Rename the Node.");
+				target->setTitle(new_title);
+			}
+			//delete the node
+			else if (result == 1) {
+				promptDeleteNode();
+			}
 		}
 
 		//There was an event
@@ -419,8 +423,9 @@ void GraphManager::addNodeToVector(std::string title, std::string file_name, int
 }//END OF addNode()
 
 void GraphManager::createNode(int x_pos, int y_pos) {
-	text_menu = new TextMenu(window_shape->w, window_shape->h, window_shape->w / MENU_WIDTH_DENOM, "Name the new node:");
-	std::string response = *text_menu->waitEvent(renderer);
+
+	//Make sure the text file doesn't exist, or you'll be overwriting it!
+	std::string response = ensureUniqueNodeName(*runTextMenu("Name the new node."), "Name the new node.");
 	std::string file_path = graph_file_path + response + ".txt";
 
 	//Open an out file stream at the file_path
@@ -487,15 +492,18 @@ void GraphManager::openTargetNode(Node* new_target) {
 
 }
 
+/*
+ * Prompt the user for text input using the given message.
+ */
 std::string* GraphManager::runTextMenu(std::string message) {
 	if (!active) {
 		return nullptr;
 	}
 
-	//render the background again //AAAAATODO: Is this necessary? Probably not
+	//render the background again
 	render();
 
-	text_menu = new TextMenu(window_shape->w, window_shape->h, window_shape->w / MENU_WIDTH_DENOM, message.c_str());
+	TextMenu* text_menu = new TextMenu(window_shape->w, window_shape->h, window_shape->w / MENU_WIDTH_DENOM, message.c_str());
 	std::string* response = text_menu->waitEvent(renderer);
 
 	if (response == nullptr) {
@@ -506,8 +514,11 @@ std::string* GraphManager::runTextMenu(std::string message) {
 	return response;
 }
 
-//AAAAATODO: comment on this
+/*
+ * Create a button menu, and prompt the user with the given message and button options.
+ */
 int GraphManager::runButtonMenu(std::string message, std::vector<std::string> buttons) {
+
 	if (!active) {
 		return -1;
 	}
@@ -515,8 +526,7 @@ int GraphManager::runButtonMenu(std::string message, std::vector<std::string> bu
 	render();
 
 	//create a new button menu
-	button_menu = new ButtonMenu(window_shape->w, window_shape->h, window_shape->w / MENU_WIDTH_DENOM, message.c_str(), buttons);
-
+	ButtonMenu* button_menu = new ButtonMenu(window_shape->w, window_shape->h, window_shape->w / MENU_WIDTH_DENOM, message.c_str(), buttons);
 	int result = button_menu->waitEvent(renderer);
 
 	if (result == -1) {
@@ -544,7 +554,6 @@ int GraphManager::promptGraphSelection(std::string message) {
 		graph_directories.push_back(path);
 	}
 
-	//AAAAATODO: make a scroll wheel for the button menu if it is taller than the screen!
 	//If there are existing graphs
 	if (graph_directories.size() > 0) {
 		int dir_index = runButtonMenu(message, graph_directories);
@@ -552,9 +561,48 @@ int GraphManager::promptGraphSelection(std::string message) {
 		return 0;
 	}
 	else {
+		//Alert the user that there are no existing graphs
 		runButtonMenu("Sorry! There aren't any graphs available.", { "Okay" });
 		//restart the function
 		return 1;
 	}
+
+}
+
+void GraphManager::promptDeleteNode() {
+
+	//If they don't want to delete the node, then return
+	if (runButtonMenu("Are you sure you would like to delete " + target->getTitle() + "?", { "Yes", "No" }) == 1) {
+		return;
+	}
+
+	//delete the node from the vector
+	nodes.erase(std::remove(nodes.begin(), nodes.end(), target), nodes.end());
+
+	//delete the file
+	fs::path to_delete = target->getFName();
+	bool result = fs::remove(to_delete);
+	if (!result) {
+		std::cout << "Something went wrong deleting the directory. Path: " + target->getFName();
+		exit(0);
+	}
+	//close the text editor harshly, not saving (since the node doesn't exist now)
+	target = nullptr;
+
+}
+
+/*
+ * Ensure that the given node_name is unique, i.e. doesn't exist in the current Graph directory.
+ * If it isn't unique, loop until a unique name is given. Return the unique node name.
+ */
+std::string GraphManager::ensureUniqueNodeName(std::string node_name, std::string message) {
+
+	//While a node exists in the graph directory with that name
+	while (fs::exists(graph_file_path + node_name + ".txt")) {
+		//Prompt the user for a new name for the node
+		node_name = *runTextMenu("That node already exists.\n" + message);
+	}
+
+	return node_name;
 
 }

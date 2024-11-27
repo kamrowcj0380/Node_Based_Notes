@@ -85,6 +85,12 @@ public:
 	 */
 	void setPos(int x, int y);
 
+	/**
+	 * Rename the node (change the title).
+	 * \param new_title: The new title for the node.
+	 */
+	void setTitle(std::string new_title);
+
 
 	//TBD - unimplemented feature
 	//void addConnection();

@@ -22,7 +22,7 @@
 #include <thread>
 
 //A made up version I attributed to this code.
-const std::string VERSION = "0.1";
+const std::string VERSION = "0.2";
 
 /*** Global / Unaffiliated ***/
 //The width of a border created by DrawRectWithBorder in Utils.h

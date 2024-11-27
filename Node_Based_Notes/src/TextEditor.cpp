@@ -106,7 +106,6 @@ void TextEditor::render(SDL_Renderer* renderer, Node* target) {
 	DrawRectWithBorder(renderer, 0, 0, shape->w, HEADER_HEIGHT, BORDER_WIDTH, &HEADER_BACKGROUND_COLOR, &BLACK);
 
 	//Render the header text
-	//AAAAATODO: Handle text overflow 
 	TextureManager::loadText(renderer, font, target->getTitle().c_str(), &BLACK, LEFT_TEXT_BUFFER, 0, HEADER_FONT_SIZE);
 
 	//Render file_data
@@ -156,3 +155,4 @@ void TextEditor::handleKeyPress(SDL_Event* event) {
 	}
 
 }//END OF handleKeyPress()
+

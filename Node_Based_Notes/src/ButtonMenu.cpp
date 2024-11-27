@@ -2,7 +2,6 @@
 
 ButtonMenu::ButtonMenu(int screen_w, int screen_h, int menu_w, const char* menu_message, std::vector<std::string> button_messages) {
 	//The total height the message will take up, including the padding above and below
-	//AAAAATODO: Make these integers part of the private variables, or even their own constants in Config.h
 	int message_total_height = MENU_MESSAGE_HEIGHT + MENU_CONTENT_PADDING * 2;
 	int menu_total_height = message_total_height + button_messages.size() * (MENU_BUTTON_HEIGHT + MENU_BUTTON_SPACING) + MENU_CONTENT_PADDING;
 
@@ -56,7 +55,9 @@ int ButtonMenu::waitEvent(SDL_Renderer* renderer) {
 		//wait for an event to happen
 		SDL_WaitEvent(&event);
 
+		//if the mouse hasn't been released since the button menu was created, don't proceed
 		if (!mouseWasUp) {
+			//check if it is currently up
 			if (!SDL_GetMouseState(NULL, NULL) & SDL_BUTTON_LMASK){
 				mouseWasUp = true;
 			}
