@@ -86,6 +86,9 @@ const int NODE_WIDTH = 25; //Note: node width and height are same, they are squa
 //The path that all graphs will be stored in this program
 const std::string GRAPH_PATH = "Graphs/";
 
+//The path that all graphs will be stored in this program
+const std::string GRAPH_DATA_PATH = "graph_data.nbg";
+
 /*** PopupMenu and Children ***/
 //The basic color of menus
 const SDL_Color MENU_BACKGROUND_COLOR = NODE_SELECTED_COLOR;

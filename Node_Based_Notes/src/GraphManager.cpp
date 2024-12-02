@@ -149,11 +149,17 @@ void GraphManager::openGraph() {
 		return;
 	}
 
+	//Make sure it's a file path
+	if (graph_file_path.back() != '/') {
+		graph_file_path += "/";
+	}
+
 	//Load the graph
 
-	//This is a bit sloppy, but directory iterator is new to me.
+	//Map of node metadata, i.e. names as key, and metadata as value
+	std::unordered_map<std::string, std::string> node_data = loadMetadataFromNBG();
+
 	//For each entry in the directory 'graph_file_path', open the file
-	int i = 0;
 	for (const auto& entry : fs::directory_iterator(graph_file_path)) {
 		//If it isn't a .txt file, then skip this iteration
 		if (entry.path().extension().string() != ".txt") {
@@ -161,7 +167,7 @@ void GraphManager::openGraph() {
 		}
 
 		//Create a string for the name including only the name of the .txt file
-		std::string name = entry.path().string().substr( graph_file_path.size()+1 );
+		std::string name = entry.path().string().substr( graph_file_path.size() );
 		
 		//Remove the '.txt' from the name
 		name = name.substr(0, name.size()-4);
@@ -169,15 +175,20 @@ void GraphManager::openGraph() {
 		//Create a string to store the file path
 		std::string outfile_path = entry.path().string();
 
+		int x = 100;
+		int y = 100;
+
+		//if the value exists in the node_metadata map
+		if (node_data.find(name) != node_data.end()) {
+			//get the metadata (currently just the position)
+			std::string pos = node_data[name];
+			x = std::stoi( pos.substr(0, pos.find(",")) );
+			y = std::stoi( pos.substr(pos.find(",")+1) );
+		}
+
 		//Add a node to the manager's vector to represent the file
-		addNodeToVector(name, outfile_path, 100 + 50*i, 100);
+		addNodeToVector(name, outfile_path, x, y);
 
-		i++;
-	}
-
-	//Make sure it's a file path
-	if (graph_file_path.back() != '/') {
-		graph_file_path += "/";
 	}
 
 } //END OF openGraph()
@@ -223,10 +234,11 @@ void GraphManager::handleGraphEvent(SDL_Event* event) {
 			int choice = runButtonMenu("Graph Editor Paused.",
 				{"Unpause", "Return to Menu", "Save and Exit"});
 			if (choice == 1) {
-				clearGraph();
+				closeGraph();
 				openGraph();
 			}
 			else if (choice == 2) {
+				closeGraph();
 				active = false;
 			}
 			break;
@@ -540,7 +552,30 @@ void GraphManager::fixGraphFilePath() {
 	graph_file_path = GRAPH_PATH + graph_file_path;
 }
 
-void GraphManager::clearGraph() {
+void GraphManager::closeGraph() {
+	std::string nbg_path = graph_file_path + GRAPH_DATA_PATH;
+
+	//Open this object's nbg file
+	std::ofstream outfile(nbg_path, std::ofstream::trunc);
+
+	//If it opened successfully, save the position of each node
+	if (outfile.good()) {
+
+		//For each node, write the title, x, and y to the file followed by a line break
+		for (int i = 0; i < nodes.size(); i++) {
+			Node* temp = nodes.at(i);
+			outfile << temp->getTitle() << " at " << temp->getShape()->x << "," << temp->getShape()->y << std::endl;
+		}
+
+	}
+	else {
+		std::cout << "ERROR: The Node metadata could not be saved upon exiting." << std::endl;
+	}
+
+	//close the file
+	outfile.close();
+
+	//Clear the node vector for future use
 	nodes.clear();
 }
 
@@ -576,6 +611,7 @@ void GraphManager::promptDeleteNode() {
 		return;
 	}
 
+
 	//delete the node from the vector
 	nodes.erase(std::remove(nodes.begin(), nodes.end(), target), nodes.end());
 
@@ -586,7 +622,11 @@ void GraphManager::promptDeleteNode() {
 		std::cout << "Something went wrong deleting the directory. Path: " + target->getFName();
 		exit(0);
 	}
-	//close the text editor harshly, not saving (since the node doesn't exist now)
+
+	//Close the text editor without saving (as the file is deleted)
+	text_editor->close();
+
+	//Make the target null, as it doesn't exist anymore
 	target = nullptr;
 
 }
@@ -606,3 +646,45 @@ std::string GraphManager::ensureUniqueNodeName(std::string node_name, std::strin
 	return node_name;
 
 }
+
+//commentodo
+std::unordered_map<std::string, std::string> GraphManager::loadMetadataFromNBG() {
+	std::ifstream node_file;
+	std::string line;
+
+	std::unordered_map<std::string, std::string> data;
+
+	//Open the nbg file for this graph
+	node_file.open(graph_file_path + GRAPH_DATA_PATH);
+
+	//If opened successfully
+	if (node_file.is_open()) {
+
+		//While there are lines left in node_file
+		while (node_file.good()) {
+
+			//Copy the next line of text
+			std::getline(node_file, line);
+
+			//Quit if the line is empty
+			if (line.empty()) { break; }
+
+			//Separate the name and metadata of the node
+			std::string name = line.substr(0, line.find(" at "));
+			std::string metadata = line.substr(line.find(" at ") + 4);
+
+			data[name] = metadata;
+
+		}
+
+	}
+	else {
+		std::cout << "Couldn't open graph data. Using default positions." << std::endl;
+	}
+
+	node_file.close();
+
+	return data;
+
+}
+

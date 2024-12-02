@@ -45,6 +45,11 @@ public:
 	void close(Node* target);
 
 	/**
+	 * An overload for closing the text editor without saving the file; intended to be called if the file is being deleted.
+	 */
+	void close();
+
+	/**
 	 * Display the graphics relevant to the text editor. This includes the editor's background, the header, the header's
 	 * text, and the text stored in 'file_data'.
 	 *

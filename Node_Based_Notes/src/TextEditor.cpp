@@ -95,6 +95,14 @@ void TextEditor::close(Node* target) {
 }//END OF close()
 
 /**
+ * Close the text editor without saving. Called when a node is deleted.
+ */
+void TextEditor::close() {
+	//TODO: is this all?
+	file_data = "";
+}
+
+/**
  * Render the text editor. This includes the header, and all of file_data.
  */
 void TextEditor::render(SDL_Renderer* renderer, Node* target) {

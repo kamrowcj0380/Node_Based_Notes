@@ -22,6 +22,8 @@
 #include "ButtonMenu.h"
 #include "TextMenu.h"
 
+#include <unordered_map>
+
 
 class GraphManager {
 public:
@@ -116,12 +118,12 @@ public:
 	std::string* runTextMenu(std::string message);
 	int runButtonMenu(std::string message, std::vector<std::string> buttons);
 	void fixGraphFilePath();
-	void clearGraph();
+	void closeGraph();
 	int promptGraphSelection(std::string message);
 	std::string ensureUniqueNodeName(std::string node_name, std::string message);
+	std::unordered_map<std::string, std::string> loadMetadataFromNBG();
 
 	//TBD - unimplemented features
-	//void deleteNode();
 	//void connectNodes();
 
 private:
