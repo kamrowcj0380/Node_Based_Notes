@@ -17,12 +17,19 @@ When version 1.0 is completed, a proper release will be created.
 ### Version x...
 A few versions will take place leading up to 1.0. This is a placeholder for those.
 
+### Version 0.4
+- [ ] Add "exit" buttons
+    - [ ] text menus, to cancel entering text
+    - [ ] main menu should allow the user to close the program
+    - [ ] options within the main menu should allow the user to return to the main menu instead of requiring a choice
+- [ ] More TBD
+
 ### Version 0.3
 A future update for this project. This is the graph file update - the graphs will load and save with more definition.
-- [ ] Node positions will be saved to a file, and read upon loading a graph
-    - [ ] To handle errors caused by missing node coordinates, make a default node position around 100, 100 
-- [ ] Rewrite event code, calling one function for processing any events
-- [ ] More TBD
+- [x] Node positions will be saved to a file, and read upon loading a graph
+    - [x] To handle errors caused by missing node coordinates, make a default node position around 100, 100 
+- [ ] Massive refactor of event code, calling one function for processing any events. Determine if this is feasible and necessary
+- [ ] Fix loading menu, where closing the program causes an error
 
 ### Version 0.2
 The next update of this project, and funcitonality required for me to consider this "version 0.2". This is the menu update, where the focus is to implement menus for different tasks.
