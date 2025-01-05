@@ -42,8 +42,9 @@ The next update for this project. This is the graph file update - the graphs wil
 - [x] Node positions will be saved to a file, and read upon loading a graph
     - [x] To handle errors caused by missing node coordinates, make a default node position around 100, 100 
 - [x] Fix loading menu, where closing the program causes an error
-- [ ] Massive refactor of event code, calling one function for processing any events. Determine if this is feasible and necessary
-- [ ] More TBD
+- [x] ~~Massive refactor of event code, calling one function for processing any events. Determine if this is feasible and necessary~~
+- [ ] Fix bug: text after a line break isn't saved
+- [ ] Address the backlog of "TODOs"
 
 ### Version 0.2
 This is the menu update, where the focus is to implement menus for different tasks.
