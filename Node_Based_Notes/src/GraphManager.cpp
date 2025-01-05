@@ -20,6 +20,10 @@ GraphManager::GraphManager() {
 	if (SDL_Init(SDL_INIT_EVERYTHING) == 0) {
 		std::cout << "SDL Initialized" << std::endl;
 	}
+	else {
+		std::cout << "SDL could not be loaded. Error info: " << SDL_GetError() << std::endl;
+		exit(0);
+	}
 
 	//get the window size
 	SDL_DisplayMode DM;
@@ -33,26 +37,38 @@ GraphManager::GraphManager() {
 	window_shape->h = DM.h / WINDOW_HEIGHT_DENOM * WINDOW_HEIGHT_NOM;
 	window_shape->x = window_shape->y = 0; //set pos to 0,0
 
-	std::cout << "Width of window: " << window_shape->w << std::endl;
-	std::cout << "Height of window: " << window_shape->h << std::endl;
-
 	//Initialize the SDL_Window
 	window = SDL_CreateWindow("Node Notes", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, window_shape->w, window_shape->h, 0);
+	if (window == NULL) {
+		std::cout << "Window could not be created. Error info: " << SDL_GetError() << std::endl;
+		exit(0);
+	}
 
 	//Initialize the SDL_Renderer using the window
 	renderer = SDL_CreateRenderer(window, -1, 0);
+	if (renderer == NULL) {
+		std::cout << "Renderer could not be created. Error info: " << SDL_GetError() << std::endl;
+		exit(0);
+	}
 
 	//Set the renderer to blend mode, which allows for transparent graphics by modifying the alpha value of colors
 	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 
 	//Initialize TTF, the text library for SDL2
-	TTF_Init();
+	if (TTF_Init() != 0) {
+		std::cout << "TTF could not be loaded. Error info: " << TTF_GetError() << std::endl;
+		exit(0);
+	}
 
 	//Start receiving SDL text input, allowing keyboard typing to be input
 	SDL_StartTextInput();
 
 	//Initialize the font with a base size of 10. This is changed each time text is rendered, so it isn't important
 	font = TTF_OpenFont("Assets/Fonts/GloriousChristmas-BLWWB.ttf", 10);
+	if (font == NULL) {
+		std::cout << "TTF Font could not be loaded." << std::endl;
+		exit(0);
+	}
 
 	//Initialize the text editor scaled to the window's size, and pass it the font pointer
 	text_editor = new TextEditor(window_shape->w, window_shape->h, font);
@@ -70,6 +86,16 @@ GraphManager::GraphManager() {
  */
 GraphManager::~GraphManager() {
 	std::cout << "Cleaning GraphManager and closing program..." << std::endl;
+
+	//If a graph is open, save it before exiting
+	if (graph_open) {
+		closeGraph();
+
+		//And, if there is a target, the text editor was active. Save the contents of the file
+		if (target != nullptr) {
+			text_editor->close(target);
+		}
+	}
 
 	text_editor->~TextEditor();
 	SDL_StopTextInput();
@@ -108,43 +134,17 @@ void GraphManager::openGraph() {
 	}
 	//Create a new graph
 	else if (choice == 1) {
-		while (true) {
-			std::string* new_graph_file_path = runTextMenu("Name the new graph.");
-
-			if (new_graph_file_path == nullptr) {
-				active = false;
-				break;
-			}
-
-			graph_file_path = *new_graph_file_path;
-			fixGraphFilePath();
-
-			if (!fs::exists(graph_file_path)) {
-				fs::create_directory(graph_file_path);
-				break;
-			}
-			else if (runButtonMenu("The graph already exists. Load the graph?", { "Load the graph", "Use a new name" }) == 0) {
-				break;
-			}
-		}
+		createNewGraph();
 	}
 	//Delete an existing graph
 	else if (choice == 2) {
-		//prompt a button menu to select a graph from the directory
-		if (promptGraphSelection("Which graph would you like to DELETE?") == 0 && 
-			runButtonMenu("Are you sure you would like to delete " + graph_file_path + "?", { "Yes", "No" }) == 0) {
-			fs::path to_delete = graph_file_path;
-			bool result = fs::remove_all(to_delete);
-			if (!result) {
-				std::cout << "Something went wrong deleting the directory. Path: " + graph_file_path;
-				exit(0);
-			}
-		}
+		deleteGraph();
 
 		//return to the start - only opening a graph leaves this function
 		openGraph();
 	}
 
+	//If the above logic flagged the end of this function, return
 	if (!active) {
 		return;
 	}
@@ -191,7 +191,58 @@ void GraphManager::openGraph() {
 
 	}
 
+	graph_open = true;
+
 } //END OF openGraph()
+
+//TODO: Comment
+void GraphManager::createNewGraph() {
+	while (true) {
+		std::string* graph_name = runTextMenu("Name the new graph.");
+
+		//if the name was a null pointer, exit the program
+		if (graph_name == nullptr) { 
+			active = false;
+			return;
+		}
+
+		//store the graph name as the graph_file_path
+		graph_file_path = *graph_name;
+
+		fixGraphFilePath();
+
+		//if the file doesn't exist
+		if (!fs::exists(graph_file_path)) {
+			//create the new graph
+			fs::create_directory(graph_file_path);
+			break;
+		}
+		//The file already exists
+		else if (runButtonMenu("The graph already exists. Load the graph?", { "Load the graph", "Use a new name" }) == 0) {
+			break;
+		}
+	}
+}
+
+//TODO: Comment
+void GraphManager::deleteGraph() {
+	//If a graph is selected, and the user confirms deletion
+	if (promptGraphSelection("Which graph would you like to DELETE?") == 0 &&
+		runButtonMenu("Are you sure you would like to delete " + graph_file_path + "?", { "Yes", "No" }) == 0) {
+		
+		//Make path string into a filesystem::path
+		fs::path to_delete = graph_file_path;
+
+		//If the graph wasn't deleted
+		if (!fs::remove_all(to_delete)) {
+			//Alert in the command line
+			std::cout << "Something went wrong deleting the directory. Path: " + graph_file_path;
+
+			//And quit
+			exit(0);
+		}
+	}
+}
 
 //TODO: Comment on this
 void GraphManager::handleEvents() {
@@ -202,7 +253,9 @@ void GraphManager::handleEvents() {
 	//if the red x was clicked, close the program. Strangely, this must be programmed in...
 	if (event.type == SDL_QUIT) {
 		active = false;
+		return;
 	}
+
 	
 	//if target is not null, then the text editor is open
 	//if handleTextEditorEvent returns false, the text editor wasn't the target for interaction
@@ -443,11 +496,8 @@ void GraphManager::createNode(int x_pos, int y_pos) {
 	//Open an out file stream at the file_path
 	std::ofstream outfile(file_path);
 
-	//outfile << "EMPTY" << std::endl;
-
 	//Close the output file
 	outfile.close();
-
 
 	addNodeToVector(response, file_path, x_pos, y_pos, true);
 
@@ -577,6 +627,8 @@ void GraphManager::closeGraph() {
 
 	//Clear the node vector for future use
 	nodes.clear();
+
+	graph_open = false;
 }
 
 int GraphManager::promptGraphSelection(std::string message) {
@@ -589,18 +641,18 @@ int GraphManager::promptGraphSelection(std::string message) {
 		graph_directories.push_back(path);
 	}
 
-	//If there are existing graphs
-	if (graph_directories.size() > 0) {
-		int dir_index = runButtonMenu(message, graph_directories);
-		graph_file_path = graph_directories.at(dir_index);
-		return 0;
-	}
-	else {
+	//If there are no existing graphs
+	if (graph_directories.size() == 0) {
 		//Alert the user that there are no existing graphs
 		runButtonMenu("Sorry! There aren't any graphs available.", { "Okay" });
-		//restart the function
 		return 1;
 	}
+
+	int dir_index = runButtonMenu(message, graph_directories);
+	
+	graph_file_path = graph_directories.at(dir_index);
+
+	return 0;
 
 }
 

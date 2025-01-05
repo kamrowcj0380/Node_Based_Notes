@@ -118,6 +118,8 @@ public:
 	std::string* runTextMenu(std::string message);
 	int runButtonMenu(std::string message, std::vector<std::string> buttons);
 	void fixGraphFilePath();
+	void createNewGraph();
+	void deleteGraph();
 	void closeGraph();
 	int promptGraphSelection(std::string message);
 	std::string ensureUniqueNodeName(std::string node_name, std::string message);
@@ -153,10 +155,10 @@ private:
 	void handleGraphEvent(SDL_Event* event);
 
 	//The x position of the mouse
-	int mousex;
+	int mousex = 0;
 
 	//The y position of the mouse
-	int mousey;
+	int mousey = 0;
 
 	//The path where this graph is stored
 	std::string graph_file_path;
@@ -169,6 +171,9 @@ private:
 
 	//Indicates whether the program is active or not
 	bool active = true;
+
+	//Indicates whether there is an open graph or not
+	bool graph_open = false;
 
 	//Indicates whether the program is fullscreen or not
 	bool fullscreen = false;

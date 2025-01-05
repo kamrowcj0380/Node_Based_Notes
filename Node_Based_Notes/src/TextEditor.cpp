@@ -31,30 +31,24 @@ TextEditor::~TextEditor() {}
  */
 void TextEditor::open(Node* target) {
 	std::ifstream node_file;
-	std::string line;
+	char c;
 
 	//Open the file that target represents
 	node_file.open(target->getFName());
 
 	//If node_file opened successfully
 	if (node_file.is_open()) {
-		//While there are lines left in node_file
-		while (node_file.good()) {
-
-			//Copy the next line of text
-			std::getline(node_file, line);
-
-			//Quit if the line is empty
-			if (line.empty()) { break; }
-
+		
+		//While there are chars left in node_file
+		while (node_file.get(c)) {
 			//Append the line to file_data
-			file_data += line;
+			file_data += c;
 		}
 
 		//Add a placeholder "cursor" for the text editor
 		file_data += "|";
-	}
-	else {
+
+	} else {
 		std::cout << "Couldn't open file" << std::endl;
 
 		//This doesn't make good use of C++ error handling, but just toss it out the window if this happens...
