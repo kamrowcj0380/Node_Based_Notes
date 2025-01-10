@@ -18,33 +18,35 @@ When version 1.0 is completed, a proper release will be created.
 A few versions will take place leading up to 1.0. This is a placeholder for those.
 
 ### Version 0.5
-A future update for this project. Create depth in the existing functionality. Implement connections, and GUI updates based on connections and the target node.
-
-### Version 0.4
-A future update for this project. Update all of the GUI to be user-friendly and reliable, and create different styles of nodes.
-- [ ] Add "exit" buttons
-    - [ ] text menus, to cancel entering text
-    - [ ] main menu should allow the user to close the program
-    - [ ] options within the main menu should allow the user to return to the main menu instead of requiring a choice
-- [ ] Make Node utilities more visible
-- [ ] Resolve text overflow on most text inputs
-    - [ ] Naming a graph / node in text menus
-    - [ ] Implement a scroll bar for the text editor
+A future update for this project. Create depth in the existing functionality. Implement connections, and GUI updates based on connections and the target node, and create different styles of nodes.
 - [ ] Create multiple node types
     - [ ] Topic
     - [ ] Header Node
     - [ ] Sub Node
-- [ ] Implement click and drag to navigate the graph
 - [ ] More TBD
 
+### Version 0.4
+Current update being developed. Update all of the GUI to be user-friendly and reliable.
+- [ ] Add "exit" buttons
+    - [ ] text menus, to cancel entering text
+    - [x] main menu should allow the user to close the program
+    - [x] options within the main menu should allow the user to return to the main menu instead of requiring a choice
+- [ ] Make Node utilities more visible
+- [ ] Resolve text overflow on most text inputs
+    - [ ] Naming a graph / node in text menus
+    - [ ] Implement a scroll bar for the text editor
+- [ ] Resolve button overflow when many graphs are created
+- [ ] Implement click and drag to navigate the graph
+- [ ] More TBD (?)
+
 ### Version 0.3
-The next update for this project. This is the graph file update - the graphs will load and save with more definition.
+This is the graph file update - the graphs will load and save with more definition.
 - [x] Node positions will be saved to a file, and read upon loading a graph
     - [x] To handle errors caused by missing node coordinates, make a default node position around 100, 100 
 - [x] Fix loading menu, where closing the program causes an error
 - [x] ~~Massive refactor of event code, calling one function for processing any events. Determine if this is feasible and necessary~~
-- [ ] Fix bug: text after a line break isn't saved
-- [ ] Address the backlog of "TODOs"
+- [x] Fix bug: text after a line break isn't saved
+- [x] Address the backlog of "TODOs" (addressed a few in Issues tab)
 
 ### Version 0.2
 This is the menu update, where the focus is to implement menus for different tasks.
