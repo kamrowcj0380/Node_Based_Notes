@@ -5,7 +5,7 @@
 - [Versions](#versions)
 
 ## <a id="current"></a> Current Version
-The current version is 0.2. The project is in early stages, although basic funcitonality has been defined and implemented.
+The current version is 0.3. The project is in early stages, although basic funcitonality has been defined and implemented.
 
 ## <a id="versions"></a> Versions
 Currently, the version is below 1.0. This is a hard initial development stage, and it's extremely fresh, so most key funcitonality is missing.
