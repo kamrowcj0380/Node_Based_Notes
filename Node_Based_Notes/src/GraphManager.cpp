@@ -64,7 +64,7 @@ GraphManager::GraphManager() {
 	SDL_StartTextInput();
 
 	//Initialize the font with a base size of 10. This is changed each time text is rendered, so it isn't important
-	font = TTF_OpenFont("Assets/Fonts/GloriousChristmas-BLWWB.ttf", 10);
+	font = TTF_OpenFont(MAIN_FONT_FILENAME.c_str(), 10);
 	if (font == NULL) {
 		std::cout << "TTF Font could not be loaded." << std::endl;
 		exit(0);
@@ -120,7 +120,13 @@ void GraphManager::openGraph() {
 	struct stat info;
 
 	int choice = runButtonMenu("Welcome to Node Based Graphs. What would you like to do?",
-		{ "Load an existing graph", "Create a new graph", "Delete a graph" });
+		{ "Load an existing graph", "Create a new graph", "Delete a graph"});
+
+	//Exit the program
+	if (choice == 3) {
+		active = false;
+		return;
+	}
 
 	std::string message = "";
 	//Load an existing graph
@@ -128,7 +134,12 @@ void GraphManager::openGraph() {
 		//prompt a button menu to select a graph from the directory
 		int result = promptGraphSelection("What graph would you like to open?");
 
-		if (result > 0) {
+		//The function failed, most likely because the user exited the program
+		if (result == -1) {
+			return;
+		}
+		//Anything but zero is an error, start this function over
+		if (result != 0) {
 			openGraph();
 		}
 	}
@@ -140,7 +151,7 @@ void GraphManager::openGraph() {
 	else if (choice == 2) {
 		deleteGraph();
 
-		//return to the start - only opening a graph leaves this function
+		//graph deletion was handled, return to the main menu
 		openGraph();
 	}
 
@@ -155,6 +166,14 @@ void GraphManager::openGraph() {
 	}
 
 	//Load the graph
+	loadGraphData();
+
+} //END OF openGraph()
+
+//Load the data for the chosen graph.
+void GraphManager::loadGraphData() {
+	//Start with an empty graph
+	nodes = {};
 
 	//Map of node metadata, i.e. names as key, and metadata as value
 	std::unordered_map<std::string, std::string> node_data = loadMetadataFromNBG();
@@ -167,10 +186,10 @@ void GraphManager::openGraph() {
 		}
 
 		//Create a string for the name including only the name of the .txt file
-		std::string name = entry.path().string().substr( graph_file_path.size() );
-		
+		std::string name = entry.path().string().substr(graph_file_path.size());
+
 		//Remove the '.txt' from the name
-		name = name.substr(0, name.size()-4);
+		name = name.substr(0, name.size() - 4);
 
 		//Create a string to store the file path
 		std::string outfile_path = entry.path().string();
@@ -182,8 +201,8 @@ void GraphManager::openGraph() {
 		if (node_data.find(name) != node_data.end()) {
 			//get the metadata (currently just the position)
 			std::string pos = node_data[name];
-			x = std::stoi( pos.substr(0, pos.find(",")) );
-			y = std::stoi( pos.substr(pos.find(",")+1) );
+			x = std::stoi(pos.substr(0, pos.find(",")));
+			y = std::stoi(pos.substr(pos.find(",") + 1));
 		}
 
 		//Add a node to the manager's vector to represent the file
@@ -193,7 +212,7 @@ void GraphManager::openGraph() {
 
 	graph_open = true;
 
-} //END OF openGraph()
+}//END OF loadGraphData()
 
 //TODO: Comment
 void GraphManager::createNewGraph() {
@@ -218,17 +237,35 @@ void GraphManager::createNewGraph() {
 			break;
 		}
 		//The file already exists
-		else if (runButtonMenu("The graph already exists. Load the graph?", { "Load the graph", "Use a new name" }) == 0) {
-			break;
+		else {
+			//Prompt the user to decide how to proceed
+			int choice = runButtonMenu("The graph already exists. Load the graph?", { "Load the graph", "Use a new name" });
+
+			if (choice == 0) {
+				//Break out of the loop, which will load the graph
+				break;
+			}
+			else if (choice == 1) {
+				//Keep looping to choose a new name
+				continue;
+			}
+			else if (choice == 2) {
+				//Default "return", this will go to back to the main menu
+				openGraph();
+			}
 		}
 	}
 }
 
 //TODO: Comment
 void GraphManager::deleteGraph() {
-	//If a graph is selected, and the user confirms deletion
-	if (promptGraphSelection("Which graph would you like to DELETE?") == 0 &&
-		runButtonMenu("Are you sure you would like to delete " + graph_file_path + "?", { "Yes", "No" }) == 0) {
+	//If a graph is not selected, return
+	if (promptGraphSelection("Which graph would you like to DELETE?") != 0) {
+		return;
+	}
+	
+	//Push a confirmation message
+	if (runVerifyButtonMenu("Are you sure you would like to delete " + graph_file_path + "?") == 0) {
 		
 		//Make path string into a filesystem::path
 		fs::path to_delete = graph_file_path;
@@ -285,16 +322,21 @@ void GraphManager::handleGraphEvent(SDL_Event* event) {
 			//Exit the program. In the future, this will instead open a main menu
 			std::cout << "Escape" << std::endl;
 			int choice = runButtonMenu("Graph Editor Paused.",
-				{"Unpause", "Return to Menu", "Save and Exit"});
-			if (choice == 1) {
+				{"Return to Menu", "Save and Exit"});
+			if (choice == 0) {
+				//Return to main menu
 				closeGraph();
 				openGraph();
 			}
-			else if (choice == 2) {
+			if (choice == 1) {
+				//Save and exit
 				closeGraph();
 				active = false;
 			}
-			break;
+			else {
+				//Close this menu
+				break;
+			}
 		}
 		case (SDLK_F5):
 			//Fullscreen the program. This is a temporary feature that will probably be removed.
@@ -416,7 +458,7 @@ bool GraphManager::handleTextEditorEvent(SDL_Event* event) {
 		//If a mouse button was pressed, and the mouse was within the coordinates for the header
 		if (event->type == SDL_MOUSEBUTTONDOWN && isWithin(mousex, mousey, 0, 0, text_editor->getShape()->w, HEADER_HEIGHT)) {
 			//ask to rename, delete, or cancel
-			int result = runButtonMenu("What would you like to do to the node?", { "rename", "delete", "cancel" });
+			int result = runButtonMenu("What would you like to do to the node?", { "rename", "delete" });
 
 			//rename the node
 			if (result == 0) {
@@ -427,6 +469,8 @@ bool GraphManager::handleTextEditorEvent(SDL_Event* event) {
 			else if (result == 1) {
 				promptDeleteNode();
 			}
+			//If result == 2, then "return" was selected. Do nothing, the program will resume
+
 		}
 
 		//There was an event
@@ -579,7 +623,7 @@ std::string* GraphManager::runTextMenu(std::string message) {
 /*
  * Create a button menu, and prompt the user with the given message and button options.
  */
-int GraphManager::runButtonMenu(std::string message, std::vector<std::string> buttons) {
+int GraphManager::runButtonMenu(std::string message, std::vector<std::string> buttons, bool add_exit) {
 
 	if (!active) {
 		return -1;
@@ -588,13 +632,22 @@ int GraphManager::runButtonMenu(std::string message, std::vector<std::string> bu
 	render();
 
 	//create a new button menu
-	ButtonMenu* button_menu = new ButtonMenu(window_shape->w, window_shape->h, window_shape->w / MENU_WIDTH_DENOM, message.c_str(), buttons);
+	ButtonMenu* button_menu = new ButtonMenu(window_shape->w, window_shape->h, window_shape->w / MENU_WIDTH_DENOM, message.c_str(), buttons, add_exit);
 	int result = button_menu->waitEvent(renderer);
 
 	if (result == -1) {
 		active = false;
 	}
 
+	return result;
+}
+
+/*
+ * A helper function to create a button menu with a yes/no question.
+ * Return values: 0 is yes, 1 is no.
+ */
+int GraphManager::runVerifyButtonMenu(std::string message) {
+	int result = runButtonMenu(message, {"Yes", "No"}, false);
 	return result;
 }
 
@@ -649,8 +702,20 @@ int GraphManager::promptGraphSelection(std::string message) {
 	}
 
 	int dir_index = runButtonMenu(message, graph_directories);
-	
-	graph_file_path = graph_directories.at(dir_index);
+
+	//Program was closed
+	if (dir_index == -1) {
+		return -1;
+	}
+
+	//Exit button was chosen
+	if (dir_index == graph_directories.size()) {
+		return 1;
+	}
+	else {
+		graph_file_path = graph_directories.at(dir_index);
+	}
+
 
 	return 0;
 
@@ -659,10 +724,9 @@ int GraphManager::promptGraphSelection(std::string message) {
 void GraphManager::promptDeleteNode() {
 
 	//If they don't want to delete the node, then return
-	if (runButtonMenu("Are you sure you would like to delete " + target->getTitle() + "?", { "Yes", "No" }) == 1) {
+	if (runVerifyButtonMenu("Are you sure you would like to delete " + target->getTitle() + "?") == 1) {
 		return;
 	}
-
 
 	//delete the node from the vector
 	nodes.erase(std::remove(nodes.begin(), nodes.end(), target), nodes.end());

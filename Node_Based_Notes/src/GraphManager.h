@@ -65,6 +65,11 @@ public:
 	 */
 	void openGraph();
 
+	/*
+	 * A helper function to openGraph(), this is the backend which loads the data of the selected graph.
+	 */
+	void loadGraphData();
+
 	/**
 	 * Handle events, i.e. user inputs to the program during runtime.
 	 */
@@ -116,7 +121,8 @@ public:
 
 	//AAAAATODO: Comment on these
 	std::string* runTextMenu(std::string message);
-	int runButtonMenu(std::string message, std::vector<std::string> buttons);
+	int runButtonMenu(std::string message, std::vector<std::string> buttons, bool add_exit = true);
+	int runVerifyButtonMenu(std::string message);
 	void fixGraphFilePath();
 	void createNewGraph();
 	void deleteGraph();

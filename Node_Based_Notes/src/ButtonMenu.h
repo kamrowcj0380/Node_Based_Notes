@@ -4,7 +4,7 @@
 
 class ButtonMenu {
 public:
-	ButtonMenu(int screen_w, int screen_h, int menu_w, const char* menu_message, std::vector<std::string> button_messages);
+	ButtonMenu(int screen_w, int screen_h, int menu_w, const char* menu_message, std::vector<std::string> button_messages, bool add_exit = true);
 
 	//As things are now, no deconstructor
 	~ButtonMenu() {}

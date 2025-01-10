@@ -25,6 +25,9 @@
 const std::string VERSION = "0.2";
 
 /*** Global / Unaffiliated ***/
+//The name of the main font used
+const std::string MAIN_FONT_FILENAME = "Assets/Fonts/OpenSans-Medium.ttf";
+
 //The width of a border created by DrawRectWithBorder in Utils.h
 const int BORDER_WIDTH = 4;
 

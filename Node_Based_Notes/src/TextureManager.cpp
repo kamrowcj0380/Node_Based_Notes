@@ -1,4 +1,5 @@
 #include "TextureManager.h"
+#include <iostream>
 
 //Display text in SDL using the given renderer.
 void TextureManager::loadText(SDL_Renderer* renderer, TTF_Font* font, const char* text, const SDL_Color* color, int x, int y, int font_size) {

@@ -1,9 +1,13 @@
 #include "ButtonMenu.h"
 
-ButtonMenu::ButtonMenu(int screen_w, int screen_h, int menu_w, const char* menu_message, std::vector<std::string> button_messages) {
+ButtonMenu::ButtonMenu(int screen_w, int screen_h, int menu_w, const char* menu_message, std::vector<std::string> button_messages, bool add_exit) {
+	//If there is an exit button, add space for it
+	int num_extra_buttons = 0;
+	add_exit ? num_extra_buttons = 1 : num_extra_buttons = 0;
+
 	//The total height the message will take up, including the padding above and below
 	int message_total_height = MENU_MESSAGE_HEIGHT + MENU_CONTENT_PADDING * 2;
-	int menu_total_height = message_total_height + button_messages.size() * (MENU_BUTTON_HEIGHT + MENU_BUTTON_SPACING) + MENU_CONTENT_PADDING;
+	int menu_total_height = message_total_height + (button_messages.size() + num_extra_buttons) * (MENU_BUTTON_HEIGHT + MENU_BUTTON_SPACING) + MENU_CONTENT_PADDING;
 
 	//initialize the SDL_Rect*
 	menu_shape = new SDL_Rect();
@@ -37,6 +41,11 @@ ButtonMenu::ButtonMenu(int screen_w, int screen_h, int menu_w, const char* menu_
 	//save the buttons to this object
 	for (int i = 0; i < button_messages.size(); i++) {
 		buttons.push_back(button_messages.at(i));
+	}
+
+	if (add_exit) {
+		//Add an "exit" button to the button menu
+		buttons.push_back("Return");
 	}
 
 }
@@ -121,7 +130,7 @@ void ButtonMenu::render(SDL_Renderer* renderer) {
 		Custom_SDLDrawRect(renderer, &WHITE, button_shape);
 
 		//then the text over top
-		TextureManager::loadWrappedText(renderer, GraphManager::font, buttons.at(i).c_str(), &BLACK, button_shape->x, button_shape->y + MENU_BUTTON_HEIGHT / 2 - MENU_BUTTON_FONT_SIZE / 2, content_width, MENU_BUTTON_FONT_SIZE, true);
+		TextureManager::loadWrappedText(renderer, GraphManager::font, buttons.at(i).c_str(), &BLACK, button_shape->x, button_shape->y, content_width, MENU_BUTTON_FONT_SIZE, true);
 
 		//and increment the button height
 		button_shape->y += MENU_BUTTON_SPACING + MENU_BUTTON_HEIGHT;
